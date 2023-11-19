@@ -130,14 +130,22 @@ async function run() {
       }
     );
 
-    app.get("/menu", async (req, res) => {
+    app.get("/api/v1/menu", async (req, res) => {
       const result = await menuCollection.find().toArray();
       res.send(result);
     });
 
-    app.post("/menu", verifyToken, verifyAdmin, async (req, res) => {
+    app.post("/api/v1/menu", verifyToken, verifyAdmin, async (req, res) => {
       const item = req.body;
       const result = await menuCollection.insertOne(item);
+      res.send(result);
+    });
+
+    app.delete("/api/v1/menu/:id",verifyToken, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: (id) };
+      const result = await menuCollection.deleteOne(query);
       res.send(result);
     });
 
