@@ -24,7 +24,8 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
+
     const menuCollection = client.db("BistroDB").collection("menu");
     const userCollection = client.db("BistroDB").collection("users");
     const reviewsCollection = client.db("BistroDB").collection("reviews");
@@ -143,6 +144,23 @@ async function run() {
       res.send(result);
     });
 
+    app.patch("/api/v1/menu/:id", async (req, res) => {
+      const item = req.body;
+      const id = req.params.id;
+      const filter = { _id: (id) };
+      const updatedDoc = {
+        $set: {
+          name: item.name,
+          category: item.category,
+          price: item.price,
+          recipe: item.recipe,
+          image: item.image,
+        },
+      };
+      const result = menuCollection.updateOne(filter, updatedDoc );
+      res.send(result);
+    });
+
     app.delete(
       "/api/v1/menu/:id",
       verifyToken,
@@ -158,9 +176,10 @@ async function run() {
 
     app.get("/api/v1/menu/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
+      const query = { _id: id };
       const result = await menuCollection.findOne(query);
       res.send(result);
+      console.log(result);
     });
 
     app.get("/reviews", async (req, res) => {
@@ -230,7 +249,7 @@ async function run() {
     });
 
     // stats or analytics
-    app.get("/admin-stats",verifyToken, verifyAdmin, async (req, res) => {
+    app.get("/admin-stats", verifyToken, verifyAdmin, async (req, res) => {
       const users = await userCollection.estimatedDocumentCount();
       const menuItems = await menuCollection.estimatedDocumentCount();
       const orders = await paymentCollection.estimatedDocumentCount();
@@ -271,7 +290,7 @@ async function run() {
      */
 
     // using aggregate pipeline
-    app.get("/order-stats",verifyToken, verifyAdmin, async (req, res) => {
+    app.get("/order-stats", verifyToken, verifyAdmin, async (req, res) => {
       const result = await paymentCollection
         .aggregate([
           {
@@ -298,11 +317,11 @@ async function run() {
           {
             $project: {
               _id: 0,
-              category: '$_id', 
-              quantity: '$quantity',
-              revenue: '$revenue'
-            }
-          }
+              category: "$_id",
+              quantity: "$quantity",
+              revenue: "$revenue",
+            },
+          },
         ])
         .toArray();
 
